@@ -5,8 +5,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
-	"go.uber.org/goleak"
 )
 
 func BenchmarkTimeWheel_AddTimer(b *testing.B) {
@@ -25,10 +23,4 @@ func BenchmarkTimeWheel_AddTimer(b *testing.B) {
 func TestParse(t *testing.T) {
 	t1, _ := Parse("2006-01-02 15:04:05", "2020-01-02 13:03:01")
 	fmt.Println(t1)
-}
-
-func TestTimeWheel_Start(t *testing.T) {
-	defer goleak.VerifyNone(t)
-	wheel := NewTimeWheel(WithInterval(time.Second), WithSlotNum(3600))
-	wheel.Start()
 }

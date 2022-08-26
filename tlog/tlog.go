@@ -66,7 +66,7 @@ func Println(args ...interface{}) {
 	_defLog.Println(args...)
 }
 
-// 设置_defLog 的 Hook 函数
+//设置_defLog 的 Hook 函数
 func SetDefalutHook(hk Hook) {
 	if _defLog == nil {
 		_ = GetDefLog()

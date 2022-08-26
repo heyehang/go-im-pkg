@@ -1,6 +1,10 @@
 package tlog
 
-import "testing"
+import (
+	"github.com/pkg/errors"
+	"os"
+	"testing"
+)
 
 func BenchmarkInfo(b *testing.B) {
 	v := 0
@@ -14,5 +18,13 @@ func BenchmarkInfo(b *testing.B) {
 		//Error("BenchmarkInfo",err,"cjdncjd","njcdcd","index",v)
 		//Warn("BenchmarkInfo","zhangsa","njcdcd","index",v)
 	}
+	defer Closed()
+}
 
+func TestDebug(t *testing.T) {
+	pwd, _ := os.Getwd()
+	ll := NewTBaseLog(WithLogDir(pwd+"/"), WithPrefixName("defalut_log"), WithProjectName("TLog"), WithTimeLayout(LogDateFmt), WithLogLeval(logLevalWarn))
+	ll.Info("12345", 222)
+	ll.Error(errors.New("test1"), "jdcjdjc", "ddd")
+	defer Closed()
 }

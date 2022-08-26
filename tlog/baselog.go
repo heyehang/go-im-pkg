@@ -33,7 +33,7 @@ const (
 )
 
 const (
-	LevalDebug = iota
+	LevalDebug = iota + 1
 	LevalInfo
 	LevalWarn
 	LevalError
@@ -50,6 +50,7 @@ var (
 	notifyChannel = make(chan bool)
 	done          = make(chan struct{})
 	levalMap      = make(map[int]string)
+	levalInfoMap  = make(map[string]int)
 	defMux        = new(sync.Mutex)
 	builderPool   sync.Pool
 )
@@ -71,6 +72,7 @@ type TBaseLog struct {
 	common      TLCommarg // 公共参数
 	wg          sync.WaitGroup
 	mux         sync.Mutex
+	logLeval    string // 日志级别, 支持 logLevalDebug = "DEBUG" logLevalWarn  = "WARN" logLevalInfo  = "INFO" logLevalError = "ERROR"
 }
 
 func init() {
@@ -78,6 +80,10 @@ func init() {
 	levalMap[LevalInfo] = logLevalInfo
 	levalMap[LevalWarn] = logLevalWarn
 	levalMap[LevalError] = logLevalError
+	levalInfoMap[logLevalDebug] = LevalDebug
+	levalInfoMap[logLevalInfo] = LevalInfo
+	levalInfoMap[logLevalWarn] = LevalWarn
+	levalInfoMap[logLevalError] = LevalError
 	fn := func() interface{} {
 		return strings.Builder{}
 	}
@@ -108,6 +114,13 @@ logPreFix 日志前缀
 func NewTBaseLog(opts ...TBaseLogOption) *TBaseLog {
 	fileLog := new(TBaseLog)
 	fileLog = WithLogOption(fileLog, opts...)
+	if fileLog.logLeval == "" {
+		fileLog.logLeval = logLevalDebug
+	}
+	// 对比日志级别是否支持
+	if _, ok := levalInfoMap[fileLog.logLeval]; !ok {
+		panic("日志级别不支持")
+	}
 	// 判断目录是否是文件夹,说明已经存在
 	s, err := os.Stat(fileLog.initPath)
 	if s == nil {
@@ -210,6 +223,13 @@ func WithProjectName(name string) TBaseLogOption {
 	}
 }
 
+// 设置日志级别
+func WithLogLeval(leval string) TBaseLogOption {
+	return func(t *TBaseLog) {
+		t.logLeval = leval
+	}
+}
+
 // 设置日志文件名称前缀
 func WithPrefixName(prefixName string) TBaseLogOption {
 	return func(t *TBaseLog) {
@@ -248,6 +268,12 @@ func WithLogFileSize(size int64) TBaseLogOption {
 }
 
 func (l *TBaseLog) WriteLog(level int, kv ...interface{}) {
+	// 过滤日志级别
+	levelInfo := levalInfoMap[l.logLeval]
+	// 丢弃log，日志级别不够
+	if level < levelInfo {
+		return
+	}
 	levelStr := levalMap[level]
 	tmp := builderPool.Get()
 	builder := tmp.(strings.Builder)
@@ -466,7 +492,7 @@ func (l *TBaseLog) closed() {
 	// 关闭文件通知，查看缓存里面是否有数据,有数据继续写入，写入完成在退出
 	// 刷新到磁盘
 	l.Sync()
-	fmt.Println("关闭channel ", l.writer.Size())
+	//fmt.Println("关闭channel ", l.writer.Size())
 	err := l.file.Close()
 	if err != nil {
 		fmt.Println("closed file err ", err)

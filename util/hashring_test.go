@@ -9,7 +9,6 @@ import (
 )
 
 func TestHashRing_GetNode(t *testing.T) {
-
 	ring := NewHashRing(2000)
 
 	host1 := "192.168.0.1:8080"

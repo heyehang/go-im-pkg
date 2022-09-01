@@ -2,12 +2,12 @@ package etcdtool
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"time"
 
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -183,7 +183,7 @@ func (etcd *EtcdTool) WatchPrefix(prefixKey string, ctx context.Context, changeF
 			case data := <-watchChan:
 				handleEvents(data, "WatchPrefix_trace", changeFunc)
 			case <-ctx.Done():
-				logger.Info("WatchPrefix_info watch key finished prefixKey", prefixKey)
+				//logger.Info("WatchPrefix_info watch key finished prefixKey", prefixKey)
 				return
 			}
 			runtime.Gosched()
@@ -194,7 +194,7 @@ func (etcd *EtcdTool) WatchPrefix(prefixKey string, ctx context.Context, changeF
 }
 
 func handleEvents(data clientv3.WatchResponse, logPrefix string, changeFunc DidChangeFunc) {
-	pre := "handleEvents"
+	//pre := "handleEvents"
 	for i := 0; i < len(data.Events); i++ {
 		event := data.Events[i]
 		key := string(event.Kv.Key)
@@ -224,7 +224,7 @@ func handleEvents(data clientv3.WatchResponse, logPrefix string, changeFunc DidC
 
 // 监控一个带前缀的key
 func (etcd *EtcdTool) WatchKey(watchKey string, ctx context.Context, changeFunc DidChangeFunc) (err error) {
-	pre := "WatchKey"
+	//pre := "WatchKey"
 	if watchKey == "" || ctx == nil {
 		err = errors.Errorf("WatchKey_err args err prefixkey = %s , ctx = %+v \n", watchKey, ctx)
 		return
@@ -236,8 +236,8 @@ func (etcd *EtcdTool) WatchKey(watchKey string, ctx context.Context, changeFunc 
 			case data := <-watchChan:
 				handleEvents(data, "WatchKey_trace", changeFunc)
 			case <-ctx.Done():
-				str := fmt.Sprintf("WatchPrefix_info watch key finished prefixKey = %s \n", watchKey)
-				logger.Info(pre, str)
+				//str := fmt.Sprintf("WatchPrefix_info watch key finished prefixKey = %s \n", watchKey)
+				//logger.Info(pre, str)
 				return
 			}
 			runtime.Gosched()
@@ -254,7 +254,7 @@ func (etcd *EtcdTool) RegistKeyAndKeepAlive(key, value string, ctx context.Conte
 		err = errors.New("RegistKeyAndKeepAlive_err key or context is empty ")
 		return
 	}
-	pre := "RegistKeyAndKeepAlive"
+	//pre := "RegistKeyAndKeepAlive"
 	lease, e := etcd.Tool.Grant(context.TODO(), 6)
 	if e != nil || lease == nil {
 		err = errors.Wrapf(e, "RegistKeyAndKeepAlive_err")

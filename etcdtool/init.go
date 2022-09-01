@@ -1,5 +1,7 @@
 package etcdtool
 
+import clientv3 "go.etcd.io/etcd/client/v3"
+
 var etcdcli *clientv3.Client
 var tool *EtcdTool
 

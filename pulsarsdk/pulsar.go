@@ -46,8 +46,8 @@ func ProductMsg(ctx context.Context, msg []byte, topic string) (msgID pulsar.Mes
 
 func SubscribeMsg(ctx context.Context, topic, SubscriptionName string, callBack Subscriber) {
 	consumer, err := cli.Subscribe(pulsar.ConsumerOptions{
-		Topic:            "my-topic",
-		SubscriptionName: "my-sub",
+		Topic:            topic,
+		SubscriptionName: SubscriptionName,
 		Type:             pulsar.Shared,
 	})
 	defer consumer.Close()

@@ -194,12 +194,10 @@ func (etcd *EtcdTool) WatchPrefix(prefixKey string, ctx context.Context, changeF
 }
 
 func handleEvents(data clientv3.WatchResponse, logPrefix string, changeFunc DidChangeFunc) {
-	//pre := "handleEvents"
 	for i := 0; i < len(data.Events); i++ {
 		event := data.Events[i]
 		key := string(event.Kv.Key)
 		value := string(event.Kv.Value)
-
 		status := ""
 		// 删除事件
 		if event.Type == mvccpb.DELETE && changeFunc != nil {

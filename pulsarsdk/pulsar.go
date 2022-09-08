@@ -3,6 +3,7 @@ package pulsarsdk
 import (
 	"context"
 	"github.com/apache/pulsar-client-go/pulsar"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -60,9 +61,10 @@ func NewProducer(topic string, sendTimeout int) (prod *Producer, err error) {
 
 func NewConsumer(topic string) (con *Consumer, err error) {
 	srcCon, err := cli.Subscribe(pulsar.ConsumerOptions{
-		Topic:       topic,
-		Type:        pulsar.Shared,
-		RetryEnable: true,
+		Topic:            topic,
+		Type:             pulsar.Shared,
+		SubscriptionName: topic + uuid.NewString(),
+		RetryEnable:      true,
 	})
 	if err != nil {
 		return

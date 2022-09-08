@@ -1,4 +1,4 @@
-module go-im-pkg
+module github.com/heyehang/go-im-pkg
 
 go 1.19
 

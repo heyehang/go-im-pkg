@@ -47,7 +47,6 @@ func NewProducer(topic string, sendTimeout int) (prod *Producer, err error) {
 	srcProd, err := cli.CreateProducer(pulsar.ProducerOptions{
 		Topic:              topic,
 		SendTimeout:        time.Second * time.Duration(sendTimeout),
-		Name:               topic + "_Producer",
 		MaxPendingMessages: 1000000,
 	})
 	if err != nil {
@@ -61,10 +60,9 @@ func NewProducer(topic string, sendTimeout int) (prod *Producer, err error) {
 
 func NewConsumer(topic string) (con *Consumer, err error) {
 	srcCon, err := cli.Subscribe(pulsar.ConsumerOptions{
-		Topic:            topic,
-		SubscriptionName: topic + "_Consumer",
-		Type:             pulsar.Shared,
-		RetryEnable:      true,
+		Topic:       topic,
+		Type:        pulsar.Shared,
+		RetryEnable: true,
 	})
 	if err != nil {
 		return
@@ -73,6 +71,10 @@ func NewConsumer(topic string) (con *Consumer, err error) {
 	con.consumer = srcCon
 	cli.subList = append(cli.subList, con)
 	return
+}
+
+func GetSrcConsumer(con *Consumer) pulsar.Consumer {
+	return con.consumer
 }
 
 // 生产消息

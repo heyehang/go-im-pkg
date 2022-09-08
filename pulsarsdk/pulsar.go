@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/apache/pulsar-client-go/pulsar"
 	"github.com/google/uuid"
+	"github.com/panjf2000/ants/v2"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func Init(option pulsar.ClientOptions, subscribePoolSize int) (err error) {
 	if subscribePoolSize < 0 {
 		subscribePoolSize = 1024
 	}
+
 	pool, err := ants.NewPool(subscribePoolSize, ants.WithNonblocking(true), ants.WithPreAlloc(true))
 	if err != nil {
 		return err

@@ -60,7 +60,6 @@ func test3() {
 	}
 
 	defer client.Close()
-
 	reader, err := client.CreateReader(pulsar.ReaderOptions{
 		Topic:          "topic-1",
 		StartMessageID: pulsar.EarliestMessageID(),

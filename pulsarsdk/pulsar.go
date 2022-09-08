@@ -4,11 +4,14 @@ import (
 	"context"
 	"github.com/apache/pulsar-client-go/pulsar"
 	"github.com/google/uuid"
+	"github.com/panjf2000/ants/v2"
 	"time"
 )
 
 var (
-	cli *Client
+	cli              *Client
+	done             = make(chan struct{}, 1)
+	subscriptMsgPool *ants.Pool
 )
 
 type Client struct {
@@ -24,7 +27,7 @@ func GetClient() *Client {
 type SubscribeCallBack func(message pulsar.Message, err error)
 type ProductCallBack func(id pulsar.MessageID, message *pulsar.ProducerMessage, callBackErr error)
 
-func Init(option pulsar.ClientOptions) (err error) {
+func Init(option pulsar.ClientOptions, subscribePoolSize int) (err error) {
 	client, err := pulsar.NewClient(option)
 	if err != nil {
 		return
@@ -33,6 +36,14 @@ func Init(option pulsar.ClientOptions) (err error) {
 	cli.Client = client
 	cli.subList = make([]*Consumer, 0, 10)
 	cli.prodList = make([]*Producer, 0, 10)
+	if subscribePoolSize <= 10 {
+		subscribePoolSize = 1024
+	}
+	pool, err := ants.NewPool(subscribePoolSize, ants.WithNonblocking(true), ants.WithPreAlloc(true))
+	if err != nil {
+		return err
+	}
+	subscriptMsgPool = pool
 	return
 }
 
@@ -46,9 +57,12 @@ type Consumer struct {
 
 func NewProducer(topic string, sendTimeout int) (prod *Producer, err error) {
 	srcProd, err := cli.CreateProducer(pulsar.ProducerOptions{
-		Topic:              topic,
-		SendTimeout:        time.Second * time.Duration(sendTimeout),
-		MaxPendingMessages: 1000000,
+		Topic:               topic,
+		SendTimeout:         time.Second * time.Duration(sendTimeout),
+		MaxPendingMessages:  1000000,
+		DisableBatching:     false,
+		BatchingMaxMessages: 2000,
+		BatchingMaxSize:     1024 * 1024,
 	})
 	if err != nil {
 		return
@@ -61,10 +75,13 @@ func NewProducer(topic string, sendTimeout int) (prod *Producer, err error) {
 
 func NewConsumer(topic string) (con *Consumer, err error) {
 	srcCon, err := cli.Subscribe(pulsar.ConsumerOptions{
-		Topic:            topic,
-		Type:             pulsar.Shared,
-		SubscriptionName: topic + uuid.NewString(),
-		RetryEnable:      true,
+		Topic:                       topic,
+		Type:                        pulsar.Shared,
+		SubscriptionName:            topic + uuid.NewString(),
+		RetryEnable:                 true,
+		AutoDiscoveryPeriod:         time.Duration(time.Now().Unix()),
+		SubscriptionInitialPosition: pulsar.SubscriptionPositionEarliest,
+		ReceiverQueueSize:           2000,
 	})
 	if err != nil {
 		return
@@ -102,9 +119,16 @@ func SubscribeMsg(ctx context.Context, topic string, callBack SubscribeCallBack)
 			if !ok {
 				continue
 			}
-			callBack(msg, nil)
-			msg.AckID(msg.ID())
+			err = subscriptMsgPool.Submit(func() {
+				callBack(msg, nil)
+				msg.AckID(msg.ID())
+			})
+			if err != nil {
+				callBack(nil, err)
+			}
 		case <-ctx.Done():
+			break
+		case <-done:
 			break
 		}
 	}
@@ -121,5 +145,6 @@ func Closed() {
 		_ = prod.Flush()
 		prod.Close()
 	}
+	done <- struct{}{}
 	cli.Close()
 }

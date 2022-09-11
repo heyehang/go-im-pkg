@@ -140,7 +140,7 @@ func (etcd *EtcdTool) Get(key string) (data string, err error) {
 }
 
 // 失败返回err ,成功返回数据 或者 返回nil
-func (etcd *EtcdTool) GetPrefix(prefixKey string) (datas []string, err error) {
+func (etcd *EtcdTool) GetPrefix(prefixKey string) (datas map[string]string, err error) {
 	if prefixKey == "" {
 		err = errors.Errorf("GetPrefixValue_err key is empty ")
 		return
@@ -157,16 +157,14 @@ func (etcd *EtcdTool) GetPrefix(prefixKey string) (datas []string, err error) {
 	if resp == nil || resp.Kvs == nil || len(resp.Kvs) == 0 {
 		return
 	}
-	tmp := make([]string, 0, 100)
+	tmp := make(map[string]string, 10)
 	for i := 0; i < len(resp.Kvs); i++ {
 		value := string(resp.Kvs[i].Value)
-		tmp = append(tmp, value)
+		tmp[resp.Kvs[i].String()] = value
 	}
-
 	if len(tmp) > 0 {
 		datas = tmp
 	}
-
 	return
 }
 

@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/panjf2000/ants/v2 v2.5.0
 	github.com/pkg/errors v0.9.1
+	github.com/pyroscope-io/client v0.3.0
 	github.com/zeromicro/go-zero v1.4.0
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/v3 v3.5.4
